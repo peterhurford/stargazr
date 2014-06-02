@@ -1,10 +1,8 @@
-require 'lib/ziptime.rb'
+require 'ziptime'
 
-module PagesHelper
-
+module PagesHelper	
 	# Main engine
 	def run_main zip
-
 		if zip.length != 5 || !numeric?(zip)		# Ensure the length of the zip code is five and it is numeric.
 			return "Error"												# Otherwise, return an error
 		else
@@ -13,6 +11,9 @@ module PagesHelper
         agent.user_agent_alias = 'Mac Safari'
       }
 			data = scrape(@agent, url)						# Scrape the data off the page (this will return an array)
+			ziptime = Ziptime::ZIPTIME
+			data['offset'] = ziptime[zip][0]
+			data['dst'] = ziptime[zip][1]
 		end
 		data																		# Pass that array to the view
 	end
@@ -36,7 +37,9 @@ module PagesHelper
 	  	raise Time.new.hour.inspect
 	  	raise @humidity[30].to_html.split('"iso8601":')[4].inspect
 	  end
-	  data['location'] = @location													# Put information into array
+
+	  data = {}
+	  data['location'] = @location
 	  data['humidity'] = @humidity
 	  data																									# Return array
 	end

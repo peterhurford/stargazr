@@ -4,10 +4,12 @@
 	<% @data = run_main(params['Zip']) %>
 	<p>
 		Location: <%= @data['location'] %><br>
+		Time Zone: <%= @data['offset'] %><br>
+		DST: <%= @data['dst'] %><br>
 		Time: 10PM<br>
 		Sunset:<br>
 		Moon phase:<br>
-		Humidity: <%= @data['humidity'] %>%<br>
+		Humidity: %<br>
 		Cloud Cover:<br>
 		Temperature:<br>
 		Percipitation:<br>
