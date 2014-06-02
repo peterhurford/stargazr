@@ -1,7 +1,17 @@
 <h1>Weather</h1>
 
 <% if params['Zip'].present? %>
-	<%= run_main(params['Zip']) %>
+	<% @data = run_main(params['Zip']) %>
+	<p>
+		Location: <%= @data['location'] %><br>
+		Time: 10PM<br>
+		Sunset:<br>
+		Moon phase:<br>
+		Humidity: <%= @data['humidity'] %>%<br>
+		Cloud Cover:<br>
+		Temperature:<br>
+		Percipitation:<br>
+	</p>
 <% end %>
 
 <%= form_tag "/pages/weather" do %>
