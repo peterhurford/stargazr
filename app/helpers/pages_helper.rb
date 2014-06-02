@@ -7,15 +7,10 @@ module PagesHelper
 		if zip.length != 5 || !numeric?(zip)		# Ensure the length of the zip code is five and it is numeric.
 			return "Error"												# Otherwise, return an error
 		else
-			url = 'http://www.wunderground.com/cgi-bin/findweather/hdfForecast?query=' + zip		# Get the URL for Weather Undergrond
-			@agent = Mechanize.new { |agent|																										# Start a mechanize agent
-        agent.user_agent_alias = 'Mac Safari'
-      }
-			data = scrape(@agent, url)						# Scrape the data off the page (this will return an array)
+			data = scrape(zip)										# Scrape the data off the page (this will return an array)
 		end
 		data																		# Pass that array to the view
 	end
-
 
 
 	# Determine if a zipcode is numeric or not
@@ -28,10 +23,15 @@ module PagesHelper
 	end
 
 
-
 	# Scrape the weather site for location and humidity data and return it in an array [location, humidity]
-	def scrape agent, source
-	  agent.get(source) do |page|														# Scrape the page
+	def scrape zip
+
+		url = 'http://www.wunderground.com/cgi-bin/findweather/hdfForecast?query=' + zip		# Get the URL for Weather Undergrond
+		agent = Mechanize.new { |agent|																										  # Start a mechanize agent
+      agent.user_agent_alias = 'Mac Safari'
+    }
+
+	  agent.get(url) do |page|															# Scrape the page
 
 	  	# Get Location Data
 	  	@location = page / 'div#location' / 'h1'						# Get location data from the h1 in the location div
@@ -46,16 +46,16 @@ module PagesHelper
 	  	humidity_pos = @weather.index('humidity')														# Get humidity
 	  	@humidity = @weather[humidity_pos+11..humidity_pos+12]
 	  	cloud_cover_pos = @weather.index('cloudcover')											# Get cloud cover
-	  	@cloud_cover = @weather[cloud_cover_pos+13..cloud_cover_pos+15]
+	  	@cloud_cover = @weather[cloud_cover_pos+13..cloud_cover_pos+14]
 	  	temperature_pos = @weather.index('temperature')											# Get temperature
 	  	@temperature = @weather[temperature_pos+14..temperature_pos+15]
 	  	precipitation_pos = @weather.index('pop')														# Get precipitation
 	  	@precipitation = @weather[precipitation_pos+5..precipitation_pos+7]
 	  end
 
-	  ziptime = Ziptime::ZIPTIME
-	  
-	  data = {}
+	  # Return data
+	  data = {}																		# Initialize hash
+	  ziptime = Ziptime::ZIPTIME 									# Get ziptime data from library
 	  data['humidity'] = @humidity
 	  data['cloud_cover'] = @cloud_cover
 	  data['temperature'] = @temperature
@@ -64,9 +64,8 @@ module PagesHelper
 		data['dst'] = ziptime[zip][1]
 	  data['location'] = @location
 	  data['humidity'] = @humidity
-	  data																									# Return array
+	  data																				# Return hash
 	end
-
 
 
 end

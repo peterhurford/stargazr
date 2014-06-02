@@ -1,23 +1,28 @@
 <h1>Weather</h1>
 
-<% if params['Zip'].present? %>
-	<% @data = run_main(params['Zip']) %>
-	<p>
-		Location: <%= @data['location'] %><br>
-		Time Zone: <%= @data['offset'] %><br>
-		DST: <%= @data['dst'] %><br>
-		Time: 10PM<br>
-		Sunset: ???<br>
-		Moon phase: ???<br>
-		Humidity: <%= data['humidity'] %>%<br>
-		Cloud Cover: <%= data['cloud_cover'] %>%<br>
-		Temperature: <%= data['temperature'] %>F<br>
-		Precipitation: <%= data['precipitation'] %>% chance<br>
-	</p>
+<% if params['zip'].present? %>
+	<% @data = run_main(params['zip']) %>
+	<% if @data == "Error" %>
+		<%= @data %>
+	<% else %>
+		<p>
+			Location: <%= @data['location'] %><br>
+			Time Zone: <%= @data['offset'] %><br>
+			DST: <%= @data['dst'] %><br>
+			Time: 10PM<br>
+			Sunset: ???<br>
+			Moon phase: ???<br>
+			Humidity: <%= @data['humidity'] %>%<br>
+			Cloud Cover: <%= @data['cloud_cover'] %>%<br>
+			Temperature: <%= @data['temperature'] %>F<br>
+			Precipitation: <%= @data['precipitation'] %>% chance<br>
+		</p>
+	<% end %>
 <% end %>
 
-<%= form_tag "/pages/weather" do %>
-  <%= text_field_tag "Zip" %>
+<% form_tag('index/:zip', :method => "get") do %>    
+  <%= label_tag :zip %>  
+  <%= text_field_tag :zip %>  
   <%= submit_tag "Go!" %>
 <% end %>
 
