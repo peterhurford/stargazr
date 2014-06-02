@@ -7,12 +7,12 @@
 		Time Zone: <%= @data['offset'] %><br>
 		DST: <%= @data['dst'] %><br>
 		Time: 10PM<br>
-		Sunset:<br>
-		Moon phase:<br>
-		Humidity: %<br>
-		Cloud Cover:<br>
-		Temperature:<br>
-		Percipitation:<br>
+		Sunset: ???<br>
+		Moon phase: ???<br>
+		Humidity: <%= data['humidity'] %>%<br>
+		Cloud Cover: <%= data['cloud_cover'] %>%<br>
+		Temperature: <%= data['temperature'] %>F<br>
+		Precipitation: <%= data['precipitation'] %>% chance<br>
 	</p>
 <% end %>
 
