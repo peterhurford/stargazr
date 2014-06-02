@@ -1,0 +1,12 @@
+<h1>Weather</h1>
+
+<% if params['Zip'].present? %>
+	<%= run_main(params['Zip']) %>
+<% end %>
+
+<%= form_tag "/pages/weather" do %>
+  <%= text_field_tag "Zip" %>
+  <%= submit_tag "Go!" %>
+<% end %>
+
+<%= debug(params) %>
