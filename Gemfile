@@ -9,4 +9,12 @@ gem 'turbolinks'
 gem 'jbuilder', '~> 2.0'
 gem 'sdoc', '~> 0.4.0'
 gem 'mechanize'
-gem 'pg' # Not used, but makes Heroku happy
+
+# I don't actually use databases, but Rails cries otherwise
+group :development do
+  gem 'sqlite3', '1.3.8'
+end
+group :production do
+  gem 'pg', '0.15.1'
+  gem 'rails_12factor', '0.0.2'
+end
