@@ -20,9 +20,8 @@
 	<% end %>
 <% end %>
 
-<% form_tag('index/:zip', :method => "get") do %>    
-  <%= label_tag :zip %>  
-  <%= text_field_tag :zip %>  
+<%= form_tag root_path do %>
+  <%= text_field_tag :zip %>
   <%= submit_tag "Go!" %>
 <% end %>
 
