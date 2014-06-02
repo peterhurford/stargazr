@@ -9,3 +9,4 @@ gem 'turbolinks'
 gem 'jbuilder', '~> 2.0'
 gem 'sdoc', '~> 0.4.0'
 gem 'mechanize'
+gem 'pg' # Not used, but makes Heroku happy
