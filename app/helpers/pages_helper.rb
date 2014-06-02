@@ -1,3 +1,5 @@
+require 'lib/ziptime.rb'
+
 module PagesHelper
 
 	# Main engine
@@ -30,8 +32,9 @@ module PagesHelper
 	  	@location = page / 'div#location' / 'h1'						# Get location data from the h1 in the location div
 	  	@location = @location.children[0].text[3..-4]				# Get location text from the child and strip out wrapper
 
-	  	@humidity = page / 'div.ccDetails'																																	# Get weather table from ccDetails div
-	  	@humidity = @humidity.children[1].children[11].children[3].children[1].children[1].text							# Tree table data for humidity
+	  	@humidity = page / 'script'
+	  	raise Time.new.hour.inspect
+	  	raise @humidity[30].to_html.split('"iso8601":')[4].inspect
 	  end
 	  data['location'] = @location													# Put information into array
 	  data['humidity'] = @humidity
