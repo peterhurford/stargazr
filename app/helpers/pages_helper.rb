@@ -41,6 +41,7 @@ module PagesHelper
 	  	hour = Time.new.hour																								# Get current hour
 	  	to_ten_pm = 22 - hour																								# Get distance from now to 10PM
 	  	jumps = to_ten_pm + 3 																							# Add 3 because we need to jump over three elements
+	  	# TO-DO: Include time zone, DST
 	  	@weather = page / 'script'																					# Look into page JavaScripts
 	  	@weather = @weather[30].to_html.split('"iso8601":')[jumps]					# Grab the 10PM data section from JavaScripts
 	  	humidity_pos = @weather.index('humidity')														# Get humidity
