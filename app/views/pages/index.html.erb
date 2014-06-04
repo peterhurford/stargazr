@@ -1,20 +1,25 @@
-<h1>Weather</h1>
+<h1>Stargazr</h1>
 
 <% if params['zip'].present? %>
 	<% @data = run_main(params['zip']) %>
-	<% if @data == "Error" %>
+	<% if @data.include? "Error" %>
 		<%= @data %>
 	<% else %>
 		<p>
 			Location: <%= @data['location'] %><br>
+			Date: <%= Date.today.strftime("%e %B %Y") %><br>
 			Time Zone: <%= @data['offset'] %><br>
 			DST: <%= @data['dst'] %><br>
-			Time: 10PM<br>
 			Sunset: ???<br>
-			Moon phase: ???<br>
+			Moon phase: ???
+		</p>
+
+		<p>
+			Time: 10PM<br>
 			Humidity: <%= @data['humidity'] %>%<br>
 			Cloud Cover: <%= @data['cloud_cover'] %>%<br>
 			Temperature: <%= @data['temperature'] %>F<br>
+			Wind: <%= @data['wind'] %>mph<br>
 			Precipitation: <%= @data['precipitation'] %>% chance<br>
 		</p>
 	<% end %>
