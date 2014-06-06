@@ -140,6 +140,8 @@ module PagesHelper
 	  	t_label = "12AM"
 	  elsif time < 12
 	  	t_label = "#{time}AM"
+	  elsif time == 12
+	  	t_label = "#{time}PM"
 	  else
 	  	timetmp = time - 12
 	  	t_label = "#{timetmp}PM"
