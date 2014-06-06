@@ -68,7 +68,7 @@ module PagesHelper
 			@data['sunset'] = sunset
 			@data['sunrise'] = sunrise
 
-			for day in 0..9
+			for day in 0..8
 				@data[day] = {}
 				
 				if day == 0
@@ -84,6 +84,7 @@ module PagesHelper
 						offset = offset + 5
 						@data[day]['label'] = (Date.today + offset.hours).strftime("%e %B %Y")
 						@now = Time.new.hour + offset
+						if @now < 0 then @now = @now + 24 end
 					end
 					
 					for hour in @now+1..23
@@ -110,12 +111,12 @@ module PagesHelper
 																						# time is a number 0-23 indicating the hour of the day
 
 		to_hour = time - @now																																# Get distance from now to target hour
-		jumps = to_hour + 3 																																# Add 3 because we need to jump over three elements
+		jumps = to_hour + 3 																																# Add 3 because we need to jump over three bogus elements in the beginnign
+		if time == 0 then jumps = jumps + 2 end																							# Don't know why this is necessary
 		jumps = 25*day + jumps																															# Adjust for day
-		if time < 22 then jumps = jumps + 1 end																							# Don't know why this is necessary
 
 		weather = page / 'script'																														# Look into page JavaScripts
-  	weather = weather[30].to_html.split('"iso8601":')[jumps]														# Grab the 10PM data section from JavaScripts
+  	weather = weather[30].to_html.split('"iso8601":')[jumps]														# Grab the data section from JavaScripts
   	
   	humidity_pos = weather.index('humidity')																						# Get humidity
   	humidity = weather[humidity_pos+11..humidity_pos+12]
@@ -148,8 +149,9 @@ module PagesHelper
 	  # Sunset score
 	  sunset_hour = @data['sunset'][0].to_i + 12
 	  sunrise_hour = @data['sunrise'][0].to_i
-	  sunset_score = -2
+	  sunset_score = 0
 	  unless (sunrise_hour..sunset_hour).include?(time) then sunset_score = 1 end
+	  unless (sunrise_hour-2..sunset_hour+2).include?(time) then sunset_score = 1.5 end
 	  unless (sunrise_hour-2..sunset_hour+2).include?(time) then sunset_score = 2 end
 	  @data[day][time]['sunset_score'] = sunset_score*50
 
@@ -169,7 +171,7 @@ module PagesHelper
 		@data[day][time]['cloud_cover_score'] = 100-cloud_cover_score
 
 		# Total score
-		if sunset_score == -2 then total_score = 0
+		if sunset_score == 0 then total_score = 0
 		else total_score = sunset_score*50 + 100-cloud_cover_score + (100-humidity_score)/2 + moon_phase_score*25 end
 		@data[day][time]['total_score'] = total_score
 

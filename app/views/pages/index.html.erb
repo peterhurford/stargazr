@@ -21,7 +21,7 @@
 				</p>
 				<% @shows = 0 %>
 				<% value.each do | k, v | %>
-					<% unless k == "label" or v['total_score'] < 200 %>
+					<% unless k == "label" #or v['total_score'] < 200 %>
 						<p>
 							Time: <%= v['label'] %><br>
 							Humidity: <%= v['humidity'] %>%<br>
