@@ -58,11 +58,15 @@ module PagesHelper
 	  	sunset = page / 'div#curAstronomy'																								# Get sunset time
 	  	sunset = sunset.children[1].children[3].children[2].text
 
+	  	sunrise = page / 'div#curAstronomy'																								# Get sunrise time
+	  	sunrise = sunrise.children[1].children[1].children[2].text
+
 		  # Return data
 		  @data = {}																																				# Initialize hash
 			@data['location'] = location
 			@data['moonphase'] = moonphase
 			@data['sunset'] = sunset
+			@data['sunrise'] = sunrise
 
 			for day in 0..9
 				@data[day] = {}
@@ -124,12 +128,51 @@ module PagesHelper
   	wind_pos = weather.index('wind_speed')																							# Get wind
   	wind = weather[wind_pos+12..wind_pos+13]
 
-  	@data[day][time]['label'] = time
   	@data[day][time]['humidity'] = humidity.gsub(/[^0-9]/,'')														# Add data.  Also, format by removing nonnumeric info.
 	  @data[day][time]['cloud_cover'] = cloud_cover.gsub(/[^0-9]/,'')
 	  @data[day][time]['temperature'] = temperature.gsub(/[^0-9]/,'')
 	  @data[day][time]['precipitation'] = precipitation.gsub(/[^0-9]/,'')
 	  @data[day][time]['wind'] = wind.gsub(/[^0-9]/,'')
+
+	  # Get time label
+	  if time == 0
+	  	t_label = "12AM"
+	  elsif time < 12
+	  	t_label = "#{time}AM"
+	  else
+	  	timetmp = time - 12
+	  	t_label = "#{timetmp}PM"
+	  end
+	  @data[day][time]['label'] = t_label
+
+	  # Sunset score
+	  sunset_hour = @data['sunset'][0].to_i + 12
+	  sunrise_hour = @data['sunrise'][0].to_i
+	  sunset_score = -2
+	  unless (sunrise_hour..sunset_hour).include?(time) then sunset_score = 1 end
+	  unless (sunrise_hour-2..sunset_hour+2).include?(time) then sunset_score = 2 end
+	  @data[day][time]['sunset_score'] = sunset_score*50
+
+	  # Moonphase score
+	  if @data['moonphase'] == "First Quarter" then moon_phase_score = 1 - day/8.0
+	  elsif @data['moonphase'] == "Full" then moon_phase_score = 0 + day/8.0
+	  elsif @data['moonphase'] == "Last Quarter" then moon_phase_score = 1 + day/8.0
+	  else moon_phase_score = 2 - day/8.0 end
+		@data[day][time]['moon_phase_score'] = moon_phase_score*25
+
+		# Humidity score
+		humidity_score = @data[day][time]['humidity'].to_f
+		@data[day][time]['humidity_score'] = (100-humidity_score)/2
+
+		# Cloud cover score
+		cloud_cover_score = @data[day][time]['cloud_cover'].to_f
+		@data[day][time]['cloud_cover_score'] = 100-cloud_cover_score
+
+		# Total score
+		if sunset_score == -2 then total_score = 0
+		else total_score = sunset_score*50 + 100-cloud_cover_score + (100-humidity_score)/2 + moon_phase_score*25 end
+		@data[day][time]['total_score'] = total_score
+
 	end
 
 end

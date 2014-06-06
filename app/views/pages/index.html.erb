@@ -10,18 +10,26 @@
 		</p>
 
 		<% @data.each do | key, value | %>
-			<% unless key == "location" or key == "moonphase" or key == "sunset" %>
+			<% unless key == "location" or key == "moonphase" or key == "sunset" or key == "sunrise" %>
 				<p>
 					Date: <%= value['label'] %><br>
 					Sunset: <%= @data['sunset'] %>PM<br>
-					Moon phase: <%= @data['moonphase'] %>
+					Sunrise: <%= @data['sunrise'] %>AM<br>
+					Moon phase: <%= @data['moonphase'] %><br>
+					Light Pollution: ???<br>
 				</p>
 				<% value.each do | k, v | %>
-					<% unless k == "label" %>
+					<% unless k == "label" or v['total_score'] < 200 %>
 						<p>
 							Time: <%= v['label'] %><br>
 							Humidity: <%= v['humidity'] %>%<br>
 							Cloud Cover: <%= v['cloud_cover'] %>%<br>
+							<b>Sunset Score: <%= v['sunset_score'] %></b><br>
+							<b>Moon Phase Score: <%= v['moon_phase_score'] %></b><br>
+							<b>Humidity Score: <%= v['humidity_score'] %></b><br>
+							<b>Cloud Cover Score: <%= v['cloud_cover_score'] %></b><br>
+							<b>Total Score: <%= v['total_score'] %></b><br>
+
 							Temperature: <%= v['temperature'] %>F<br>
 							Wind: <%= v['wind'] %>mph<br>
 							Precipitation: <%= v['precipitation'] %>% chance<br>
