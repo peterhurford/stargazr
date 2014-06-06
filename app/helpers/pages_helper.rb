@@ -46,23 +46,20 @@ module PagesHelper
       agent.user_agent_alias = 'Mac Safari'
     }
 
-	  agent.get(url) do |page|																					# Scrape the page
+	  agent.get(url) do |page|																														# Scrape the page
 
 	  	# Get Location Data
-	  	location = page / 'div#location' / 'h1'													# Get location data from the h1 in the location div
-	  	location = location.children[0].text[3..-4]											# Get location text from the child and strip out wrapper
+	  	location = page / 'div#location' / 'h1'																						# Get location data from the h1 in the location div
+	  	location = location.children[0].text[3..-4]																				# Get location text from the child and strip out wrapper
 
-	  	moonphase = page / 'div.moonNorth'															# Get moon phase
+	  	moonphase = page / 'div.moonNorth'																								# Get moon phase
 	  	moonphase =  moonphase.children[1].children[0].text
 
-	  	sunset = page / 'div#curAstronomy'															# Get sunset time
+	  	sunset = page / 'div#curAstronomy'																								# Get sunset time
 	  	sunset = sunset.children[1].children[3].children[2].text
 
 		  # Return data
-		  @data = {}																											# Initialize hash
-		  ziptime = Ziptime::ZIPTIME 																			# Get ziptime data from library
-		  @data['offset'] = ziptime[zip][0]
-			@data['dst'] = ziptime[zip][1]
+		  @data = {}																																				# Initialize hash
 			@data['location'] = location
 			@data['moonphase'] = moonphase
 			@data['sunset'] = sunset
@@ -71,45 +68,50 @@ module PagesHelper
 				@data[day] = {}
 				
 				if day == 0
-					@data[day]['label'] = Date.today.strftime("%e %B %Y")
-					now = Time.new.hour
-					for hour in now+1..23
+					ziptime = Ziptime::ZIPTIME 																										# Get ziptime data from library
+					offset = ziptime[zip][0]
+					dst = ziptime[zip][1]
+					if Time.now.dst? and dst == 0 then offset = offset - 1 end
+
+					if offset == -5
+						@data[day]['label'] = Date.today.strftime("%e %B %Y")
+						@now = Time.new.hour
+					else
+						offset = offset + 5
+						@data[day]['label'] = (Date.today + offset.hours).strftime("%e %B %Y")
+						@now = Time.new.hour + offset
+					end
+					
+					for hour in @now+1..23
 						@data[day][hour] = {}
-						get_weather!(page, day, hour)																# Fetch weather for all relevant times and add it to data
+						get_weather!(page, day, hour)																								# Fetch weather for all relevant times and add it to data
 					end
 
 				else
 					@data[day]['label'] = (Date.today + day.days).strftime("%e %B %Y")
 					for hour in 0..23
 						@data[day][hour] = {}
-						get_weather!(page, day, hour)																# Fetch weather for all relevant times and add it to data
+						get_weather!(page, day, hour)																								# Fetch weather for all relevant times and add it to data
 					end
 				end
 			
 			end
 		end
 
-	  @data																															# Return hash
+	  @data																																								# Return hash
 	end
 
 
-	def get_weather! page, day, time 					# Expect day is a number 0-1 indicating days from today
-																						# time is a number 0-24 indicating the hour of the day
+	def get_weather! page, day, time 					# Expect day is a number 0-9 indicating days from today
+																						# time is a number 0-23 indicating the hour of the day
 
-		hour = Time.new.hour																															# Get current hour
-		to_hour = time - hour																															# Get distance from now to target hour
-		jumps = to_hour + 3 																															# Add 3 because we need to jump over three elements
-		jumps = 25*day + jumps																														# Adjust for day
-
-  	# TODO: Get moon phase
-  	# TODO: Get sunset
-  	# TODO: Handle different timezones and DST
-  	# TODO: Only get times for after sunset
-  	# TODO: Get multiple days
+		to_hour = time - @now																																# Get distance from now to target hour
+		jumps = to_hour + 3 																																# Add 3 because we need to jump over three elements
+		jumps = 25*day + jumps																															# Adjust for day
+		if time < 22 then jumps = jumps + 1 end																							# Don't know why this is necessary
 
 		weather = page / 'script'																														# Look into page JavaScripts
   	weather = weather[30].to_html.split('"iso8601":')[jumps]														# Grab the 10PM data section from JavaScripts
-  	#if day == 1 and time == 1 then raise [day, time, jumps, weather].inspect end
   	
   	humidity_pos = weather.index('humidity')																						# Get humidity
   	humidity = weather[humidity_pos+11..humidity_pos+12]
@@ -123,7 +125,6 @@ module PagesHelper
   	wind = weather[wind_pos+12..wind_pos+13]
 
   	@data[day][time]['label'] = time
-  	# TODO: Format time better
   	@data[day][time]['humidity'] = humidity.gsub(/[^0-9]/,'')														# Add data.  Also, format by removing nonnumeric info.
 	  @data[day][time]['cloud_cover'] = cloud_cover.gsub(/[^0-9]/,'')
 	  @data[day][time]['temperature'] = temperature.gsub(/[^0-9]/,'')

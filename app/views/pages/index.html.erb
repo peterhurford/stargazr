@@ -7,12 +7,10 @@
 	<% else %>
 		<p>
 			Location: <%= @data['location'] %><br>
-			Time Zone: <%= @data['offset'] %><br>
-			DST: <%= @data['dst'] %>
 		</p>
 
 		<% @data.each do | key, value | %>
-			<% unless key == "offset" or key == "location" or key == "dst" or key == "moonphase" or key == "sunset" %>
+			<% unless key == "location" or key == "moonphase" or key == "sunset" %>
 				<p>
 					Date: <%= value['label'] %><br>
 					Sunset: <%= @data['sunset'] %>PM<br>
