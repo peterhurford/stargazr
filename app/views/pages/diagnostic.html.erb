@@ -5,19 +5,14 @@
 		<%= @data %>
 	<% else %>
 		<h1>Stargazr Forecast for <%= params['zip'] %></h1>
-		<p>
-			Location: <%= @data['location'] %><br>
-		</p>
+		<p>Location: <%= @data['location'] %></p>
+		<p><%= link_to "(Back to graph.)", "/" + params['zip'] %></p>
 
 		<% @data.each do | key, value | %>
-			<% unless key == "location" or key == "sunset" or key == "sunrise" %>
+			<% unless key == "location" %>
 				<hr>
 				<p>
 					Date: <%= value['label'] %><br>
-					Sunset: <%= @data['sunset'] %>PM<br>
-					Sunrise: <%= @data['sunrise'] %>AM<br>
-					Moonrise: ???<br>
-					Moonset: ???<br>
 					Light Pollution: ???<br>
 				</p>
 				<% value.each do | k, v | %>
@@ -27,6 +22,10 @@
 							Humidity: <%= v['humidity'] %>%<br>
 							Cloud Cover: <%= v['cloud_cover'] %>%<br>
 							Moon phase: <%= v['phase_name'] %><br>
+							Sunset: <%= v['sunset'] %><br>
+							Sunrise: <%= v['sunrise'] %><br>
+							Moonrise: <%= v['moonrise'] %><br>
+							Moonset: <%= v['moonset'] %><br>
 							<b>Sunset Score: <%= v['sunset_score'] %></b><br>
 							<b>Moon Phase Score: <%= v['moon_phase_score'] %></b><br>
 							<b>Humidity Score: <%= v['humidity_score'] %></b><br>
@@ -48,6 +47,6 @@
 <% end %>
 
 <%= form_tag diagnostic_path do %>
-  <%= text_field_tag :zip %>
+  Enter Zip Code: <%= text_field_tag :zip %>
   <%= submit_tag "Go!" %>
 <% end %>

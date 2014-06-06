@@ -4,10 +4,7 @@
 		<h1>Stargazr</h1>
 		<%= @data %>
 	<% else %>
-		<h1>Stargazr Forecast for <%= params['zip'] %></h1>
-		<p>
-			Location: <%= @data['location'] %><br>
-		</p>
+		<h1>Stargazr Forecast for <%= @data['location'] %></h1>
 
 		<% @line_data = {} %>
 		<% @data.each do | key, value | %>
@@ -20,23 +17,29 @@
 			<% end %>
 		<% end %>
 
-		<p>
-			<%= line_chart(@line_data) %>
-		</p>
-
-		<% @line_data = @line_data.sort_by{|k,v| v} %>
-		<% @line_data.reverse!.first(5).each do | key, value | %>
-			<p>
-				Time: <%= key.strftime("%e %B %Y %l:%M%P") %><br>
-				Score: <%= value %>
-			</p>
+		<% @line_data_sorted = @line_data.sort_by{|k,v| v} %>
+		<% @line_data_sorted.reverse!.first(1).each do | key, value | %>
+			<p>The best time to go stargazing (within the week) is 
+			<% if key.strftime("%e %B %Y") == Time.now.strftime("%e %B %Y") %>
+				<strong>tonight</strong> at <strong><%= key.strftime("%l:%M%P") %></strong>.</p>
+			<% elsif key.strftime("%e %B %Y") == Time.now.tomorrow.strftime("%e %B %Y") and key.strftime("%P") == "am" %>
+				<strong>tonight</strong> at <strong><%= key.strftime("%l:%M%P") %></strong> (<%= key.strftime("%e %B")[1..-1] %>).</p>
+			<% else %>
+				<strong><%= key.strftime("%e %B") %></strong> at <strong><%= key.strftime("l:%M%P") %></strong>.</p>
+			<% end %>
 		<% end %>
+
+		<p>
+			<%= line_chart(@line_data, {library: {vAxis: {title: "Stargazing Quality"}}, max: 110}) %>
+		</p>
+		<p><%= link_to "(See full details.)", params['zip'] + "/diagnostic" %></p>
+		
 	<% end %>
 <% else %>
 	<h1>Stargazr</h1>
 <% end %>
 
 <%= form_tag root_path do %>
-  <%= text_field_tag :zip %>
+  Enter Zip Code: <%= text_field_tag :zip %>
   <%= submit_tag "Go!" %>
 <% end %>

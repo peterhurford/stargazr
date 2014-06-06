@@ -52,19 +52,10 @@ module PagesHelper
 	  	location = page / 'div#location' / 'h1'																						# Get location data from the h1 in the location div
 	  	location = location.children[0].text[3..-4]																				# Get location text from the child and strip out wrapper
 
-	  	sunset = page / 'div#curAstronomy'																								# Get sunset time
-	  	sunset = sunset.children[1].children[3].children[2].text
-
-	  	sunrise = page / 'div#curAstronomy'																								# Get sunrise time
-	  	sunrise = sunrise.children[1].children[1].children[2].text
-
-		  # Return data
-		  @data = {}																																				# Initialize hash
+	  	@data = {}																																				# Initialize hash
 			@data['location'] = location
-			@data['sunset'] = sunset
-			@data['sunrise'] = sunrise
 
-			for day in 0..8
+			for day in 0..6
 				@data[day] = {}
 				
 				if day == 0
@@ -84,15 +75,17 @@ module PagesHelper
 					end
 					
 					moon_data = get_moon_phase(day)																								# Calculate moon data
+					rise_data = get_rises_and_sets(page, day)
 					for hour in @now+1..23
-						run_main(moon_data, page, day, hour)
+						run_main(page, day, hour, moon_data, rise_data)
 					end
 
 				else
 					@data[day]['label'] = (Date.today + day.days).strftime("%e %B %Y")
 					moon_data = get_moon_phase(day)
+					rise_data = get_rises_and_sets(page, day)
 					for hour in 0..23
-						run_main(moon_data, page, day, hour)
+						run_main(page, day, hour, moon_data, rise_data)
 					end
 				end
 			
@@ -104,11 +97,18 @@ module PagesHelper
 
 
 	# Wrapper function
-	def run_main moon_data, page, day, hour
+	def run_main page, day, hour, moon_data, rise_data
 		@data[day][hour] = {}																																# Initialize hash
 		@data[day][hour]['phase_day'] = moon_data[0]																				# Import moon data
 		@data[day][hour]['phase_name'] = moon_data[1]
+		
+		@data[day][hour]['sunset'] = rise_data[0]
+		@data[day][hour]['sunrise'] = rise_data[1]
+		@data[day][hour]['moonset'] = rise_data[2]
+		@data[day][hour]['moonrise'] = rise_data[3]
+
 		get_weather!(page, day, hour)																												# Fetch weather for all relevant times and impute it to data hash
+		
 		score!(day, hour)																																		# Impute a score to data hash
 	end
 
@@ -160,6 +160,28 @@ module PagesHelper
 	end
 
 
+	# Get sunrise, sunset, moonrise, and moonset
+	def get_rises_and_sets page, day
+		astro = page / 'script'																															# Look into page JavaScripts
+  	astro = astro[30].to_html.split('"astronomy":')[1].split('length_of_day')						# Grab the data section from JavaScripts
+  	jumps = day + 1
+
+  	sunset_pos = astro[jumps].index('sunset')																						# Get sunset
+  	sunset = astro[jumps][sunset_pos+57..sunset_pos+64].gsub(/[^0-9A-Z:]/,'')
+  	
+  	sunrise_pos = astro[jumps].index('sunrise')																					# Get sunrise
+  	sunrise = astro[jumps][sunrise_pos+57..sunrise_pos+64].gsub(/[^0-9A-Z:]/,'')
+
+  	moonset_pos = astro[jumps].index('moonset')																					# Get moonset
+  	moonset = astro[jumps][moonset_pos+57..moonset_pos+64].gsub(/[^0-9A-Z:]/,'')
+
+  	moonrise_pos = astro[jumps].index('moonrise')																				# Get moonrise
+  	moonrise = astro[jumps][moonrise_pos+57..moonrise_pos+65].gsub(/[^0-9A-Z:]/,'')
+
+	  [sunset, sunrise, moonset, moonrise]																								# Return data
+	end
+
+
 	# Translate moon data from moon calculation
 	def get_moon_phase day
 		ftime = Time.now + day.days
@@ -193,33 +215,56 @@ module PagesHelper
 	end
 
 
-	# Score the hour for stargazing quality
+	# Score the hour for stargazing quality on an 100 point scale
 	def score! day, time
 		# Sunset score
-	  sunset_hour = @data['sunset'][0].to_i + 12
-	  sunrise_hour = @data['sunrise'][0].to_i
-	  sunset_score = 0
-	  unless (sunrise_hour..sunset_hour).include?(time) then sunset_score = 1 end
-	  unless (sunrise_hour-1..sunset_hour+1).include?(time) then sunset_score = 1.5 end
-	  unless (sunrise_hour-2..sunset_hour+2).include?(time) then sunset_score = 2 end
-	  @data[day][time]['sunset_score'] = sunset_score*50
+		### 0-40 determined by sun
+		### ...sunset is 10
+		### ...sunset+1 is 35
+		### ...sunset+2 is 45
+		### ...sunset+3 is 50
+		sunset_score = 0
+		if time <= @data[day][time]['sunrise'].to_i or (@data[day][time]['sunset'].to_i + 12) <= time then sunset_score = 10 end
+		if time <= (@data[day][time]['sunrise'].to_i - 1) or (@data[day][time]['sunset'].to_i + 13) <= time then sunset_score = 35 end
+		if time <= (@data[day][time]['sunrise'].to_i - 2) or (@data[day][time]['sunset'].to_i + 14) <= time then sunset_score = 45 end
+		if time <= (@data[day][time]['sunrise'].to_i - 3) or (@data[day][time]['sunset'].to_i + 15) <= time then sunset_score = 50 end
+	  @data[day][time]['sunset_score'] = sunset_score
 
 	  # Moon phase score
-	  phase = @data[day][time]['phase_day']
-	  moon_phase_score = (15 - phase).abs
-		@data[day][time]['moon_phase_score'] = moon_phase_score*3
+	  ### 0-25 determined by moon
+		### ...full is 0
+		### ...new is 25
+	  moonrise_t = @data[day][time]['moonrise']
+	  moonrise = moonrise_t.to_i
+	  if moonrise_t.last(2) == "PM" then moonrise += 12 end
+	  moonset_t = @data[day][time]['moonset']
+	  moonset = moonset_t.to_i
+	  if moonset_t.last(2) == "PM" then moonset += 12 end
+	  if moonrise < moonset then interval = (moonrise+1..moonset-1)
+	  else interval = (moonset+1..moonrise-1) end
+	  if interval.include?(time)
+	  	moon_phase_score = 15
+	  else
+		  phase = @data[day][time]['phase_day']
+		  moon_phase_score = (15 - phase).abs
+		end
+		@data[day][time]['moon_phase_score'] = (moon_phase_score*(5/3)).round
 
 		# Humidity score
+		### 0-10 determined by humidity
+		### ...10*humidity
 		humidity_score = @data[day][time]['humidity'].to_f
-		@data[day][time]['humidity_score'] = (100-humidity_score)/2
+		@data[day][time]['humidity_score'] = (10*((100-humidity_score)/100)).round
 
 		# Cloud cover score
+		### 0-25 determined by cloudcover
+		### ...25*cloudcover
 		cloud_cover_score = @data[day][time]['cloud_cover'].to_f
-		@data[day][time]['cloud_cover_score'] = 100-cloud_cover_score
+		@data[day][time]['cloud_cover_score'] = (25*((100-cloud_cover_score)/100)).round
 
 		# Total score
 		if sunset_score == 0 then total_score = 0
-		else total_score = sunset_score*50 + 100-cloud_cover_score + (100-humidity_score)/2 + moon_phase_score*3 end
+		else total_score = sunset_score + moon_phase_score*(5/3) + 10*((100-humidity_score)/100) + 25*((100-cloud_cover_score)/100) end
 		@data[day][time]['total_score'] = total_score
 	end
 
