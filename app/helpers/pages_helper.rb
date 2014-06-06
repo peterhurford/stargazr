@@ -90,13 +90,15 @@ module PagesHelper
 					for hour in @now+1..23
 						@data[day][hour] = {}
 						get_weather!(page, day, hour)																								# Fetch weather for all relevant times and add it to data
+						score!(day, hour)																														# Impute a score to data hash
 					end
 
 				else
 					@data[day]['label'] = (Date.today + day.days).strftime("%e %B %Y")
 					for hour in 0..23
 						@data[day][hour] = {}
-						get_weather!(page, day, hour)																								# Fetch weather for all relevant times and add it to data
+						get_weather!(page, day, hour)																								# Fetch weather for all relevant times and impute it to data hash
+						score!(day, hour)																														# Impute a score to data hash
 					end
 				end
 			
@@ -147,13 +149,16 @@ module PagesHelper
 	  	t_label = "#{timetmp}PM"
 	  end
 	  @data[day][time]['label'] = t_label
+	end
 
-	  # Sunset score
+
+	def score! day, time
+		# Sunset score
 	  sunset_hour = @data['sunset'][0].to_i + 12
 	  sunrise_hour = @data['sunrise'][0].to_i
 	  sunset_score = 0
 	  unless (sunrise_hour..sunset_hour).include?(time) then sunset_score = 1 end
-	  unless (sunrise_hour-2..sunset_hour+2).include?(time) then sunset_score = 1.5 end
+	  unless (sunrise_hour-1..sunset_hour+1).include?(time) then sunset_score = 1.5 end
 	  unless (sunrise_hour-2..sunset_hour+2).include?(time) then sunset_score = 2 end
 	  @data[day][time]['sunset_score'] = sunset_score*50
 
@@ -176,7 +181,6 @@ module PagesHelper
 		if sunset_score == 0 then total_score = 0
 		else total_score = sunset_score*50 + 100-cloud_cover_score + (100-humidity_score)/2 + moon_phase_score*25 end
 		@data[day][time]['total_score'] = total_score
-
 	end
 
 end
