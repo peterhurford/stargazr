@@ -7,21 +7,31 @@
 	<% else %>
 		<p>
 			Location: <%= @data['location'] %><br>
-			Date: <%= Date.today.strftime("%e %B %Y") %><br>
 			Time Zone: <%= @data['offset'] %><br>
-			DST: <%= @data['dst'] %><br>
-			Sunset: ???<br>
-			Moon phase: ???
+			DST: <%= @data['dst'] %>
 		</p>
 
-		<p>
-			Time: 10PM<br>
-			Humidity: <%= @data['humidity'] %>%<br>
-			Cloud Cover: <%= @data['cloud_cover'] %>%<br>
-			Temperature: <%= @data['temperature'] %>F<br>
-			Wind: <%= @data['wind'] %>mph<br>
-			Precipitation: <%= @data['precipitation'] %>% chance<br>
-		</p>
+		<% @data.each do | key, value | %>
+			<% unless key == "offset" or key == "location" or key == "dst" or key == "moonphase" or key == "sunset" %>
+				<p>
+					Date: <%= value['label'] %><br>
+					Sunset: <%= @data['sunset'] %>PM<br>
+					Moon phase: <%= @data['moonphase'] %>
+				</p>
+				<% value.each do | k, v | %>
+					<% unless k == "label" %>
+						<p>
+							Time: <%= v['label'] %><br>
+							Humidity: <%= v['humidity'] %>%<br>
+							Cloud Cover: <%= v['cloud_cover'] %>%<br>
+							Temperature: <%= v['temperature'] %>F<br>
+							Wind: <%= v['wind'] %>mph<br>
+							Precipitation: <%= v['precipitation'] %>% chance<br>
+						</p>
+					<% end %>
+				<% end %>
+			<% end %>
+		<% end %>
 	<% end %>
 <% end %>
 
