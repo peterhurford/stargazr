@@ -1,5 +1,5 @@
 <% if params['zip'].present? %>
-	<% @data = run_main(params['zip']) %>
+	<% @data = engine(params['zip']) %>
 	<% if @data.include? "Error" %>
 		<h1>Stargazr</h1>
 		<%= @data %>
@@ -10,22 +10,22 @@
 		</p>
 
 		<% @data.each do | key, value | %>
-			<% unless key == "location" or key == "moonphase" or key == "sunset" or key == "sunrise" %>
+			<% unless key == "location" or key == "sunset" or key == "sunrise" %>
 				<hr>
 				<p>
 					Date: <%= value['label'] %><br>
 					Sunset: <%= @data['sunset'] %>PM<br>
 					Sunrise: <%= @data['sunrise'] %>AM<br>
-					Moon phase: <%= @data['moonphase'] %><br>
 					Light Pollution: ???<br>
 				</p>
 				<% @shows = 0 %>
 				<% value.each do | k, v | %>
-					<% unless k == "label" #or v['total_score'] < 200 %>
+					<% unless k == "label" or v['total_score'] < 200 %>
 						<p>
 							Time: <%= v['label'] %><br>
 							Humidity: <%= v['humidity'] %>%<br>
 							Cloud Cover: <%= v['cloud_cover'] %>%<br>
+							Moon phase: <%= v['phase_name'] %><br>
 							<b>Sunset Score: <%= v['sunset_score'] %></b><br>
 							<b>Moon Phase Score: <%= v['moon_phase_score'] %></b><br>
 							<b>Humidity Score: <%= v['humidity_score'] %></b><br>

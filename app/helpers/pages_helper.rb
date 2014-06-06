@@ -3,7 +3,7 @@ require 'ziptime'
 module PagesHelper	
 
 	# Main engine
-	def run_main zip
+	def engine zip
 		if zip.length != 5																		# Ensure zip code is five digits or return error
 			return "Error: Zip code must be five digits."
 		elsif !numeric?(zip)																	# Ensure zip code is numeric or return error
@@ -52,9 +52,6 @@ module PagesHelper
 	  	location = page / 'div#location' / 'h1'																						# Get location data from the h1 in the location div
 	  	location = location.children[0].text[3..-4]																				# Get location text from the child and strip out wrapper
 
-	  	moonphase = page / 'div.moonNorth'																								# Get moon phase
-	  	moonphase =  moonphase.children[1].children[0].text
-
 	  	sunset = page / 'div#curAstronomy'																								# Get sunset time
 	  	sunset = sunset.children[1].children[3].children[2].text
 
@@ -64,7 +61,6 @@ module PagesHelper
 		  # Return data
 		  @data = {}																																				# Initialize hash
 			@data['location'] = location
-			@data['moonphase'] = moonphase
 			@data['sunset'] = sunset
 			@data['sunrise'] = sunrise
 
@@ -87,18 +83,16 @@ module PagesHelper
 						if @now < 0 then @now = @now + 24 end
 					end
 					
+					moon_data = get_moon_phase(day)																								# Calculate moon data
 					for hour in @now+1..23
-						@data[day][hour] = {}
-						get_weather!(page, day, hour)																								# Fetch weather for all relevant times and add it to data
-						score!(day, hour)																														# Impute a score to data hash
+						run_main(moon_data, page, day, hour)
 					end
 
 				else
 					@data[day]['label'] = (Date.today + day.days).strftime("%e %B %Y")
+					moon_data = get_moon_phase(day)
 					for hour in 0..23
-						@data[day][hour] = {}
-						get_weather!(page, day, hour)																								# Fetch weather for all relevant times and impute it to data hash
-						score!(day, hour)																														# Impute a score to data hash
+						run_main(moon_data, page, day, hour)
 					end
 				end
 			
@@ -109,14 +103,26 @@ module PagesHelper
 	end
 
 
+	# Wrapper function
+	def run_main moon_data, page, day, hour
+		@data[day][hour] = {}																																# Initialize hash
+		@data[day][hour]['phase_day'] = moon_data[0]																				# Import moon data
+		@data[day][hour]['phase_name'] = moon_data[1]
+		get_weather!(page, day, hour)																												# Fetch weather for all relevant times and impute it to data hash
+		score!(day, hour)																																		# Impute a score to data hash
+	end
+
+
+	# Function to read weather data
 	def get_weather! page, day, time 					# Expect day is a number 0-9 indicating days from today
 																						# time is a number 0-23 indicating the hour of the day
 
 		to_hour = time - @now																																# Get distance from now to target hour
 		jumps = to_hour + 3 																																# Add 3 because we need to jump over three bogus elements in the beginnign
-		if time == 0 then jumps = jumps + 2 end																							# Don't know why this is necessary
-		jumps = 25*day + jumps																															# Adjust for day
+		if time == 0 then jumps += 2 end																										# Don't know why this is necessary
+		jumps += 25*day																																			# Adjust for day
 
+  	# Get weather data
 		weather = page / 'script'																														# Look into page JavaScripts
   	weather = weather[30].to_html.split('"iso8601":')[jumps]														# Grab the data section from JavaScripts
   	
@@ -152,6 +158,40 @@ module PagesHelper
 	end
 
 
+	# Translate moon data from moon calculation
+	def get_moon_phase day
+		ftime = Time.now + day.days
+		phase_day = calculate_moon(ftime.day, ftime.month, ftime.year)											# Get phase day (0-29)
+	
+  	phase_name = "New Moon"																															# Get phase name from phase day
+  	if 2 <= phase_day and phase_day <= 6 then phase_name = "Waxing Crescent"
+  	elsif 7 <= phase_day and phase_day <= 9 then phase_name = "First Quarter"
+  	elsif 10 <= phase_day and phase_day <= 13 then phase_name = "Waxing Gibbous"
+  	elsif 14 <= phase_day and phase_day <= 16 then phase_name = "Full Moon"
+  	elsif 14 <= phase_day and phase_day <= 16 then phase_name = "Waning Gibbous"
+  	elsif 14 <= phase_day and phase_day <= 16 then phase_name = "Last Quarter"
+  	else phase_name = "Waning Crescent" end
+
+  	[phase_day, phase_name]																															# Return an array with the phase day and phase name
+  end
+
+
+  # Calculate moon phase
+	def calculate_moon day, month, year
+		# Conway method adapted from http://www.ben-daglish.net/moon.shtml
+		# Note: will need a new method if this app is still around in the 22nd century
+		r = year % 100;
+		r %= 19;
+		if r > 9 then r -= 19 end
+		r = ((r * 11) % 30) + month + day
+		if month < 3 then r += 2 end
+		r -= ((year<2000) ? 4 : 8.3)
+		r = ((r+0.5)%30).floor
+		return (r < 0) ? r+30 : r 						# Returns phase day (0 to 29, where 0=new moon, 15=full etc.)
+	end
+
+
+	# Score the hour for stargazing quality
 	def score! day, time
 		# Sunset score
 	  sunset_hour = @data['sunset'][0].to_i + 12
@@ -162,12 +202,10 @@ module PagesHelper
 	  unless (sunrise_hour-2..sunset_hour+2).include?(time) then sunset_score = 2 end
 	  @data[day][time]['sunset_score'] = sunset_score*50
 
-	  # Moonphase score
-	  if @data['moonphase'] == "First Quarter" then moon_phase_score = 1 - day/8.0
-	  elsif @data['moonphase'] == "Full" then moon_phase_score = 0 + day/8.0
-	  elsif @data['moonphase'] == "Last Quarter" then moon_phase_score = 1 + day/8.0
-	  else moon_phase_score = 2 - day/8.0 end
-		@data[day][time]['moon_phase_score'] = moon_phase_score*25
+	  # Moon phase score
+	  phase = @data[day][time]['phase_day']
+	  moon_phase_score = (15 - phase).abs
+		@data[day][time]['moon_phase_score'] = moon_phase_score*3
 
 		# Humidity score
 		humidity_score = @data[day][time]['humidity'].to_f
@@ -179,8 +217,9 @@ module PagesHelper
 
 		# Total score
 		if sunset_score == 0 then total_score = 0
-		else total_score = sunset_score*50 + 100-cloud_cover_score + (100-humidity_score)/2 + moon_phase_score*25 end
+		else total_score = sunset_score*50 + 100-cloud_cover_score + (100-humidity_score)/2 + moon_phase_score*3 end
 		@data[day][time]['total_score'] = total_score
 	end
+
 
 end
