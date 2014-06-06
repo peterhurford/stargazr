@@ -1,10 +1,10 @@
-<h1>Stargazr</h1>
-
 <% if params['zip'].present? %>
 	<% @data = run_main(params['zip']) %>
 	<% if @data.include? "Error" %>
+		<h1>Stargazr</h1>
 		<%= @data %>
 	<% else %>
+		<h1>Stargazr Forecast for <%= params['zip'] %></h1>
 		<p>
 			Location: <%= @data['location'] %><br>
 		</p>
@@ -46,11 +46,11 @@
 		<% end %>
 	<% end %>
 	<hr>
+<% else %>
+	<h1>Stargazr</h1>
 <% end %>
 
 <%= form_tag root_path do %>
   <%= text_field_tag :zip %>
   <%= submit_tag "Go!" %>
 <% end %>
-
-<%= debug(params) %>
