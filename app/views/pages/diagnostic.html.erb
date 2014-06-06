@@ -1,0 +1,53 @@
+<% if params['zip'].present? %>
+	<% @data = engine(params['zip']) %>
+	<% if @data.include? "Error" %>
+		<h1>Stargazr</h1>
+		<%= @data %>
+	<% else %>
+		<h1>Stargazr Forecast for <%= params['zip'] %></h1>
+		<p>
+			Location: <%= @data['location'] %><br>
+		</p>
+
+		<% @data.each do | key, value | %>
+			<% unless key == "location" or key == "sunset" or key == "sunrise" %>
+				<hr>
+				<p>
+					Date: <%= value['label'] %><br>
+					Sunset: <%= @data['sunset'] %>PM<br>
+					Sunrise: <%= @data['sunrise'] %>AM<br>
+					Moonrise: ???<br>
+					Moonset: ???<br>
+					Light Pollution: ???<br>
+				</p>
+				<% value.each do | k, v | %>
+					<% unless k == "label" %>
+						<p>
+							Time: <%= value['label'] %> <%= v['label'] %><br>
+							Humidity: <%= v['humidity'] %>%<br>
+							Cloud Cover: <%= v['cloud_cover'] %>%<br>
+							Moon phase: <%= v['phase_name'] %><br>
+							<b>Sunset Score: <%= v['sunset_score'] %></b><br>
+							<b>Moon Phase Score: <%= v['moon_phase_score'] %></b><br>
+							<b>Humidity Score: <%= v['humidity_score'] %></b><br>
+							<b>Cloud Cover Score: <%= v['cloud_cover_score'] %></b><br>
+							<b>Total Score: <%= v['total_score'] %></b><br>
+
+							Temperature: <%= v['temperature'] %>F<br>
+							Wind: <%= v['wind'] %>mph<br>
+							Precipitation: <%= v['precipitation'] %>% chance<br>
+						</p>
+					<% end %>
+				<% end %>
+			<% end %>
+		<% end %>
+	<% end %>
+	<hr>
+<% else %>
+	<h1>Stargazr</h1>
+<% end %>
+
+<%= form_tag diagnostic_path do %>
+  <%= text_field_tag :zip %>
+  <%= submit_tag "Go!" %>
+<% end %>

@@ -9,43 +9,29 @@
 			Location: <%= @data['location'] %><br>
 		</p>
 
+		<% @line_data = {} %>
 		<% @data.each do | key, value | %>
 			<% unless key == "location" or key == "sunset" or key == "sunrise" %>
-				<hr>
-				<p>
-					Date: <%= value['label'] %><br>
-					Sunset: <%= @data['sunset'] %>PM<br>
-					Sunrise: <%= @data['sunrise'] %>AM<br>
-					Light Pollution: ???<br>
-				</p>
-				<% @shows = 0 %>
 				<% value.each do | k, v | %>
-					<% unless k == "label" or v['total_score'] < 200 %>
-						<p>
-							Time: <%= v['label'] %><br>
-							Humidity: <%= v['humidity'] %>%<br>
-							Cloud Cover: <%= v['cloud_cover'] %>%<br>
-							Moon phase: <%= v['phase_name'] %><br>
-							<b>Sunset Score: <%= v['sunset_score'] %></b><br>
-							<b>Moon Phase Score: <%= v['moon_phase_score'] %></b><br>
-							<b>Humidity Score: <%= v['humidity_score'] %></b><br>
-							<b>Cloud Cover Score: <%= v['cloud_cover_score'] %></b><br>
-							<b>Total Score: <%= v['total_score'] %></b><br>
-
-							Temperature: <%= v['temperature'] %>F<br>
-							Wind: <%= v['wind'] %>mph<br>
-							Precipitation: <%= v['precipitation'] %>% chance<br>
-						</p>
-						<% @shows = @shows + 1 %>
-					<% end %>
-				<% end %>
-				<% if @shows == 0 %>
-					<em>No sufficiently good times found for this day. :(</em>
+					<% unless k == "label"
+						@line_data[v['timestamp']] = v['total_score']
+					end %>
 				<% end %>
 			<% end %>
 		<% end %>
+
+		<p>
+			<%= line_chart(@line_data) %>
+		</p>
+
+		<% @line_data = @line_data.sort_by{|k,v| v} %>
+		<% @line_data.reverse!.first(5).each do | key, value | %>
+			<p>
+				Time: <%= key.strftime("%e %B %Y %l:%M%P") %><br>
+				Score: <%= value %>
+			</p>
+		<% end %>
 	<% end %>
-	<hr>
 <% else %>
 	<h1>Stargazr</h1>
 <% end %>

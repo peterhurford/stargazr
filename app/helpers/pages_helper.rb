@@ -155,6 +155,8 @@ module PagesHelper
 	  	t_label = "#{timetmp}PM"
 	  end
 	  @data[day][time]['label'] = t_label
+	  offset = Time.new.hour - @now
+	  @data[day][time]['timestamp'] = Time.new.beginning_of_hour + day.days + time.hours - Time.new.hour.hours - offset.hours
 	end
 
 
