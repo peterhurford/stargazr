@@ -11,6 +11,7 @@
 
 		<% @data.each do | key, value | %>
 			<% unless key == "location" or key == "moonphase" or key == "sunset" or key == "sunrise" %>
+				<hr>
 				<p>
 					Date: <%= value['label'] %><br>
 					Sunset: <%= @data['sunset'] %>PM<br>
@@ -18,6 +19,7 @@
 					Moon phase: <%= @data['moonphase'] %><br>
 					Light Pollution: ???<br>
 				</p>
+				<% @shows = 0 %>
 				<% value.each do | k, v | %>
 					<% unless k == "label" or v['total_score'] < 200 %>
 						<p>
@@ -34,11 +36,16 @@
 							Wind: <%= v['wind'] %>mph<br>
 							Precipitation: <%= v['precipitation'] %>% chance<br>
 						</p>
+						<% @shows = @shows + 1 %>
 					<% end %>
+				<% end %>
+				<% if @shows == 0 %>
+					<em>No sufficiently good times found for this day. :(</em>
 				<% end %>
 			<% end %>
 		<% end %>
 	<% end %>
+	<hr>
 <% end %>
 
 <%= form_tag root_path do %>
